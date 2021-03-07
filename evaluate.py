@@ -5,7 +5,7 @@ import numpy as np
 import torch.nn as nn
 import scipy.io as scio
 
-import model
+import models
 import options
 
 if __name__ == '__main__':
@@ -13,14 +13,14 @@ if __name__ == '__main__':
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     with torch.no_grad():
-        init_net = model.init_net(args)
+        init_net = models.init_net(args)
         init_net = nn.DataParallel(init_net)
         init_net.load_state_dict(torch.load("./trained_models/init_net_ratio{}.pth".format(args.ratio),
                                             map_location='cpu'))
         init_net.to(device)
         init_net.eval()
 
-        deep_net = model.oct_net(args)
+        deep_net = models.oct_net(args)
         deep_net = nn.DataParallel(deep_net)
         deep_net.load_state_dict(torch.load("./trained_models/init_net_ratio{}.pth".format(args.ratio),
                                             map_location='cpu'))

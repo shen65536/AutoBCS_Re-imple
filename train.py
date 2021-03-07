@@ -2,14 +2,14 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-import model
+import models
 import utils
 import options
 
 
 def train(args):
-    init_net = model.init_net(args)
-    deep_net = model.oct_net(args)
+    init_net = models.init_net(args)
+    deep_net = models.oct_net(args)
 
     print("Data loading.")
     loader = utils.loader(args)
@@ -48,7 +48,7 @@ def train(args):
     print("Train end.")
     torch.save(init_net.state_dict(), "./trained_models/init_net_ratio{}.pth".format(args.ratio))
     torch.save(deep_net.state_dict(), "./trained_models/deep_net_ratio{}.pth".format(args.ratio))
-    print("Trained model saved.")
+    print("Trained models saved.")
 
 
 if __name__ == "__main__":
