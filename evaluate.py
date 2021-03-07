@@ -1,34 +1,35 @@
+import time
 import torch
+import torchvision
+import numpy as np
 import torch.nn as nn
+import scipy.io as scio
 
 import model
 import options
 
 if __name__ == '__main__':
     args = options.args_set()
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     with torch.no_grad():
-        IniReconNet = model.init_net(args)  # 比例因子：4
-        IniReconNet = nn.DataParallel(IniReconNet)
-        IniReconNet.load_state_dict(
-            torch.load('../Training/IniReconNet_100EPO_64BATCH_ScalingFactor_4.pth', map_location='cpu'))
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        IniReconNet.to(device)
-        IniReconNet.eval()
+        init_net = model.init_net(args)
+        init_net = nn.DataParallel(init_net)
+        init_net.load_state_dict(torch.load("./trained_models/init_net_ratio{}.pth", map_location='cpu'))
+        init_net.to(device)
+        init_net.eval()
 
-        DeepOctNet = OctNet(2)
-        DeepOctNet = nn.DataParallel(DeepOctNet)
-        DeepOctNet.load_state_dict(torch.load('../Training/DeepOctNet_100EPO_64BATCH_ScalingFactor_4.pth', map_location='cpu'))
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        DeepOctNet.to(device)
-        DeepOctNet.eval()
+        deep_net = model.oct_net(args)
+        deep_net = nn.DataParallel(deep_net)
+        deep_net.load_state_dict(torch.load("./trained_models/init_net_ratio{}.pth", map_location='cpu'))
+        deep_net.to(device)
+        deep_net.eval()
 
         File_No = 100
-        Folder_name = '/Users/shen/PycharmProjects/BSD100'
+        Folder_name = "{}/BSD100".format(args.test_path)
 
         for i in range(1, File_No + 1):
-            # name = ('../%s/(%d).mat' % (Folder_name, i))
-            name = ('%s/(%d).mat' % (Folder_name, i))
+            name = "{}/({}).mat".format(Folder_name, i)
             data = scio.loadmat(name)
             image = data['temp3']
             image = np.array(image)
@@ -38,33 +39,32 @@ if __name__ == '__main__':
             image = torch.unsqueeze(image, 0)
             image = image.float()
 
-            # Evaluation
             image = image.to(device)
-            pred_IR = IniReconNet(image)
+            init_res = init_net(image)
             start_time = time.time()
-            pred_FR = DeepOctNet(pred_IR)
+            deep_res = deep_net(init_res)
             end_time = time.time()
 
-            pred_IR = torch.squeeze(pred_IR, 0)
-            pred_IR = torch.squeeze(pred_IR, 0)
-            pred_IR = pred_IR.to('cpu')
-            pred_IR = pred_IR.numpy()
-            path = ('%s/(%d)_initRecon.mat' % (Folder_name, i))
-            scio.savemat(path, {'PRED_IR': pred_IR})
+            init_res = torch.squeeze(init_res, 0)
+            init_res = torch.squeeze(init_res, 0)
+            init_res = init_res.to('cpu')
+            init_res = init_res.numpy()
+            path = "{}/result/mat/({})_init.mat".format(Folder_name, i)
+            scio.savemat(path, {'IR': init_res})
 
             tensor2image = torchvision.transforms.ToPILImage()
 
-            tensor1 = torch.from_numpy(np.array(pred_IR))
+            tensor1 = torch.from_numpy(np.array(init_res))
             image1 = tensor2image(tensor1)
-            image1.save('%s/InitRecon(%d).jpg' % (Folder_name, i))
+            image1.save("{}/result/image/({})_init.jpg".format(Folder_name, i))
 
-            pred_FR = torch.squeeze(pred_FR, 0)
-            pred_FR = torch.squeeze(pred_FR, 0)
-            pred_FR = pred_FR.to('cpu')
-            pred_FR = pred_FR.numpy()
-            path = ('%s/(%d)_finalRecon.mat' % (Folder_name, i))
-            scio.savemat(path, {'PRED_FR': pred_FR})
+            deep_res = torch.squeeze(deep_res, 0)
+            deep_res = torch.squeeze(deep_res, 0)
+            deep_res = deep_res.to('cpu')
+            deep_res = deep_res.numpy()
+            path = "{}/result/mat/({})_deep.mat".format(Folder_name, i)
+            scio.savemat(path, {'FR': deep_res})
 
-            tensor2 = torch.from_numpy(np.array(pred_FR))
+            tensor2 = torch.from_numpy(np.array(deep_res))
             image2 = tensor2image(tensor2)
-            image2.save('%s/FinalRecon(%d).jpg' % (Folder_name, i))
+            image2.save("{}/result/image/({})_deep.jpg".format(Folder_name, i))
