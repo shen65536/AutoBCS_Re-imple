@@ -15,13 +15,15 @@ if __name__ == '__main__':
     with torch.no_grad():
         init_net = model.init_net(args)
         init_net = nn.DataParallel(init_net)
-        init_net.load_state_dict(torch.load("./trained_models/init_net_ratio{}.pth", map_location='cpu'))
+        init_net.load_state_dict(torch.load("./trained_models/init_net_ratio{}.pth".format(args.ratio),
+                                            map_location='cpu'))
         init_net.to(device)
         init_net.eval()
 
         deep_net = model.oct_net(args)
         deep_net = nn.DataParallel(deep_net)
-        deep_net.load_state_dict(torch.load("./trained_models/init_net_ratio{}.pth", map_location='cpu'))
+        deep_net.load_state_dict(torch.load("./trained_models/init_net_ratio{}.pth".format(args.ratio),
+                                            map_location='cpu'))
         deep_net.to(device)
         deep_net.eval()
 
