@@ -10,8 +10,9 @@ import utils
 
 
 def train(args):
-    init_net = models.init_net(args)
-    deep_net = models.oct_net(args)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    init_net = nn.DataParallel(models.init_net(args)).to(device)
+    deep_net = nn.DataParallel(models.oct_net(args)).to(device)
 
     print("Data loading.")
     dataset = utils.loader(args)
@@ -44,6 +45,7 @@ def train(args):
     for epoch in range(start_epoch, args.epochs):
         for idx, item in enumerate(dataset):
             x, _ = item
+            x = x.to(device)
 
             optimizer_init.zero_grad()
             optimizer_deep.zero_grad()
