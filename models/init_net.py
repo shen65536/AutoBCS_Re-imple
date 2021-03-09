@@ -1,9 +1,13 @@
+import torch
 import torch.nn as nn
+
+import utils
 
 
 class init_net(nn.Module):
     def __init__(self, args):
         super(init_net, self).__init__()
+        self.args = args
         self.channels = args.channels
         self.block_size = args.block_size
         self.sample_points = int(args.ratio * args.block_size ** 2)
@@ -14,6 +18,11 @@ class init_net(nn.Module):
         self.init = nn.Conv2d(self.sample_points, self.block_size ** 2, kernel_size=1, bias=False)
 
     def forward(self, x):
-        y = self.sample(x)
-        y = self.init(y)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        x = x.to(device)
+
+        temp = self.sample(x)
+        y = self.init(temp)
+        y = utils.reshape(y, self.args)
+        y = y.to(device)
         return y

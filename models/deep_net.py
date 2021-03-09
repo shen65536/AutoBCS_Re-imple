@@ -14,6 +14,7 @@ class oct_net(nn.Module):
         self.initial_num_layers = 64
         self.encoding_depth = args.depth
         self.temp = list(range(1, self.encoding_depth + 1))
+
         self.input_oct = models.oct_encode(1, self.initial_num_layers, alpha_x=1, alpha_y=0.5)
 
         for encodingLayer in self.temp:
@@ -26,7 +27,7 @@ class oct_net(nn.Module):
 
         self.encode_layers = nn.ModuleList(self.encode_layers)
 
-        self.mid_oct = models.oct_mid(self.num_outputs)
+        self.mid_layer = models.oct_mid(self.num_outputs)
         initial_decode_num_ch = self.num_outputs
 
         for decodingLayer in self.temp:
@@ -38,7 +39,6 @@ class oct_net(nn.Module):
                 self.decode_layers.append(models.oct_decode(self.num_inputs, self.num_inputs // 2))
 
         self.decode_layers = nn.ModuleList(self.decode_layers)
-
         self.final_oct = models.oct_conv(self.num_inputs, self.num_inputs, alpha_x=0.5, alpha_y=1)
 
     def forward(self, x):
@@ -48,14 +48,16 @@ class oct_net(nn.Module):
         names = self.__dict__
         x_h, x_l, = self.input_oct(x_h, x_l)
         temp = list(range(1, self.encoding_depth + 1))
+
         for encodingLayer in temp:
             temp_conv = self.encode_layers[encodingLayer - 1]
             x_h, x_l = temp_conv(x_h, x_l)
             names['EncodeX' + str(encodingLayer)] = x_h, x_l
+
             x_h = F.max_pool2d(x_h, 2)
             x_l = F.max_pool2d(x_l, 2)
 
-        x_h, x_l = self.mid_oct(x_h, x_l)
+        x_h, x_l = self.mid_layer(x_h, x_l)
 
         for decodingLayer in temp:
             temp_conv = self.decode_layers[decodingLayer - 1]
@@ -65,20 +67,3 @@ class oct_net(nn.Module):
         x = self.final_oct(x_h, x_l)
         x = x + input_x
         return x
-
-
-def weights_init(m):
-    if isinstance(m, nn.Conv2d):
-        nn.init.normal_(m.weight, mean=0, std=1e-4)
-
-    if isinstance(m, nn.ConvTranspose2d):
-        nn.init.normal_(m.weight, mean=0, std=1e-4)
-
-    if isinstance(m, nn.BatchNorm2d):
-        nn.init.constant_(m.weight, 1)
-
-
-def get_parameter_number(net):
-    total_num = sum(p.numel() for p in net.parameters())
-    trainable_num = sum(p.numel() for p in net.parameters() if p.requires_grad)
-    return {'Total': total_num, 'Trainable': trainable_num}

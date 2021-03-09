@@ -6,7 +6,7 @@ import torch.nn as nn
 import scipy.io as scio
 
 import models
-import options
+from utils import options
 
 if __name__ == '__main__':
     args = options.args_set()
