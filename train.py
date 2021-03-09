@@ -71,10 +71,10 @@ def train(args):
         scheduler_init.step()
         scheduler_deep.step()
         state_init = {"model": init_net.state_dict(), "optimizer": optimizer_init.state_dict()}
-        state_deep = {"model": deep_net.state_dict(), "optimizer": optimizer_deep.state_dict(), "epoch": epoch}
+        state_deep = {"model": deep_net.state_dict(), "optimizer": optimizer_deep.state_dict(), "epoch": epoch + 1}
         torch.save(state_init, args.init_state_dict)
         torch.save(state_deep, args.deep_state_dict)
-        print("Check point of epoch {} saved.".format(epoch))
+        print("Check point of epoch {} saved.".format(epoch + 1))
 
     print("Train end.")
     torchsummary.summary(init_net, (1, 32, 32))
