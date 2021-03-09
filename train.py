@@ -27,11 +27,11 @@ def train(args):
     time_start = time.time()
 
     if os.path.exists(args.init_state_dict) and os.path.exists(args.deep_state_dict):
-        checkpoint_init = torch.load(args.init_state_dict)
+        checkpoint_init = torch.load(args.init_state_dict, map_location="cpu")
         init_net.load_state_dict(checkpoint_init["model"])
         optimizer_init.load_state_dict(checkpoint_init["optimizer"])
 
-        checkpoint_deep = torch.load(args.deep_state_dict)
+        checkpoint_deep = torch.load(args.deep_state_dict, map_location="cpu")
         deep_net.load_state_dict(checkpoint_deep["model"])
         optimizer_deep.load_state_dict(checkpoint_deep["optimizer"])
 
@@ -52,31 +52,29 @@ def train(args):
             deep_x = deep_net(init_x)
 
             loss_init = criterion(x, init_x)
-            loss_deep = criterion(init_x, deep_x)
+            loss_deep = criterion(x, deep_x)
 
-            loss_init.backward()
+            loss_init.backward(retain_graph=True)
             loss_deep.backward()
 
             optimizer_init.step()
             optimizer_deep.step()
 
             use_time = time.time() - time_start
-            print("=> epoch: {}, batch: {}, Loss1: {.4f}, Loss2: {.4f}, lr1: {}, lr2: {}, used time: {.4f}"
-                  .format(epoch + 1, idx + 1, loss_init.item(), loss_deep.item(), optimizer_init.param_groups[0]['lr'],
-                          optimizer_deep.param_groups[0]['lr'], use_time))
+            if (idx + 1) % 20 == 0:
+                print("=> epoch: {}, batch: {}, Loss1: {:.4f}, Loss2: {:.4f}, lr1: {}, lr2: {}, used time: {:.4f}"
+                      .format(epoch + 1, idx + 1, loss_init.item(), loss_deep.item(),
+                              optimizer_init.param_groups[0]['lr'], optimizer_deep.param_groups[0]['lr'], use_time))
 
         scheduler_init.step()
         scheduler_deep.step()
-        state_init = {'model': init_net.state_dict(), 'optimizer': optimizer_init.state_dict()}
-        state_deep = {'model': init_net.state_dict(), 'optimizer': optimizer_deep.state_dict(), 'epoch': epoch}
+        state_init = {"model": init_net.state_dict(), "optimizer": optimizer_init.state_dict()}
+        state_deep = {"model": deep_net.state_dict(), "optimizer": optimizer_deep.state_dict(), "epoch": epoch}
         torch.save(state_init, args.init_state_dict)
         torch.save(state_deep, args.deep_state_dict)
         print("Check point of epoch {} saved.".format(epoch))
 
     print("Train end.")
-    torch.save(init_net.state_dict(), args.init_state_dict)
-    torch.save(deep_net.state_dict(), args.deep_state_dict)
-    print("Trained models saved.")
     torchsummary.summary(init_net, (1, 32, 32))
     torchsummary.summary(deep_net, (1, 32, 32))
     with open("./trained_models/init_net.txt", "w") as f1:
