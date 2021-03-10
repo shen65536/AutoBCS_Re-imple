@@ -18,7 +18,7 @@ def train(args):
     dataset = utils.loader(args)
     print("Data loaded.")
 
-    criterion = nn.L1Loss()
+    criterion = nn.L1Loss().to(device)
     optimizer_init = optim.Adam(init_net.parameters())
     optimizer_deep = optim.Adam(deep_net.parameters())
     scheduler_init = optim.lr_scheduler.MultiStepLR(optimizer_init, milestones=[50, 80], gamma=0.1)
