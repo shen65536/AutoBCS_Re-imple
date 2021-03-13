@@ -28,11 +28,16 @@ def train(args):
     time_start = time.time()
 
     if os.path.exists(args.init_state_dict) and os.path.exists(args.deep_state_dict):
-        checkpoint_init = torch.load(args.init_state_dict, map_location="cpu")
+        if torch.cuda.is_available():
+            checkpoint_init = torch.load(args.init_state_dict)
+            checkpoint_deep = torch.load(args.deep_state_dict)
+        else:
+            checkpoint_init = torch.load(args.init_state_dict, map_location="cpu")
+            checkpoint_deep = torch.load(args.deep_state_dict, map_location="cpu")
+
         init_net.load_state_dict(checkpoint_init["model"])
         optimizer_init.load_state_dict(checkpoint_init["optimizer"])
 
-        checkpoint_deep = torch.load(args.deep_state_dict, map_location="cpu")
         deep_net.load_state_dict(checkpoint_deep["model"])
         optimizer_deep.load_state_dict(checkpoint_deep["optimizer"])
 
@@ -51,6 +56,7 @@ def train(args):
             optimizer_deep.zero_grad()
 
             init_x = init_net(x)
+            init_x = utils.reshape(init_x, args)
             deep_x = deep_net(init_x)
 
             loss_init = criterion(x, init_x)

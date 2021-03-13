@@ -1,6 +1,4 @@
-import torch
 import torch.nn as nn
-
 import utils
 
 
@@ -18,7 +16,7 @@ class init_net(nn.Module):
         self.init = nn.Conv2d(self.sample_points, self.block_size ** 2, kernel_size=1, bias=False)
 
     def forward(self, x):
-        temp = self.sample(x)
-        y = self.init(temp)
+        y = self.sample(x)
+        y = self.init(y)
         y = utils.reshape(y, self.args)
         return y

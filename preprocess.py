@@ -15,7 +15,7 @@ def get_jpg_paths(args):
     return ps
 
 
-def crop(path, args):
+def jpg_crop(path, args):
     count = 1
     for i, path in enumerate(path):
         image = Image.open(path)
@@ -28,7 +28,7 @@ def crop(path, args):
         for a in idx1:
             for b in idx2:
                 crop_box = (a, b, a + args.block_size, b + args.block_size)
-                temp = image.crop(crop_box)
+                temp = image.jpg_crop(crop_box)
                 temp.save("{}/preprocessed_images/({}).jpg".format(args.train_path, count))
                 count += 1
 
@@ -37,5 +37,5 @@ if __name__ == "__main__":
     print("=> Now preprocessing.")
     my_args = utils.args_set()
     paths = get_jpg_paths(my_args)
-    crop(paths, my_args)
+    jpg_crop(paths, my_args)
     print("=> Done.")
