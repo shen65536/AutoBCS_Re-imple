@@ -28,7 +28,7 @@ def jpg_crop(path, args):
         for a in idx1:
             for b in idx2:
                 crop_box = (a, b, a + args.block_size, b + args.block_size)
-                temp = image.jpg_crop(crop_box)
+                temp = image.crop(crop_box)
                 temp.save("{}/preprocessed_images/({}).jpg".format(args.train_path, count))
                 count += 1
 

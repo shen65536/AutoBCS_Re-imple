@@ -69,8 +69,9 @@ if __name__ == '__main__':
             for a in idx1:
                 for b in idx2:
                     input = x[:, :, a:a + args.block_size, b:b + args.block_size]
-                    output = init_net(input)
-                    output = deep_net(output)
+                    output1 = init_net(input)
+                    output2 = deep_net(output1)
+                    output = (output1 + output2) / 2
                     temp[count, :, :, :, :, ] = output
                     count = count + 1
             end_time = time.time()
